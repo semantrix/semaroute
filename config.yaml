@@ -1,0 +1,87 @@
+# semaroute Configuration File
+# This file contains all configuration options for the semaroute LLM routing gateway
+
+server:
+  port: 8080
+  read_timeout: 30s
+  write_timeout: 30s
+  idle_timeout: 60s
+  shutdown_timeout: 10s
+
+# Provider configurations
+providers:
+  openai:
+    name: "openai"
+    enabled: false  # Set to true and add API key to enable
+    api_key: "${OPENAI_API_KEY}"  # Use environment variable
+    base_url: "https://api.openai.com/v1"
+    timeout: 30s
+    max_retries: 3
+    retry_delay: 1s
+    health_check_url: "https://api.openai.com/v1/models"
+    health_check_interval: 30s
+
+  anthropic:
+    name: "anthropic"
+    enabled: false  # Set to true and add API key to enable
+    api_key: "${ANTHROPIC_API_KEY}"  # Use environment variable
+    base_url: "https://api.anthropic.com"
+    timeout: 30s
+    max_retries: 3
+    retry_delay: 1s
+    health_check_url: "https://api.anthropic.com/v1/models"
+    health_check_interval: 30s
+
+# Routing policy configuration
+routing_policy:
+  type: "cost_based"  # Options: cost_based, failover
+  config:
+    # For cost_based policy
+    cost_weight: 0.6
+    latency_weight: 0.3
+    health_weight: 0.1
+    max_latency_threshold: 5s
+    
+    # For failover policy
+    primary_provider: "openai"
+    backup_providers: ["anthropic"]
+    failover_delay: 30s
+
+# Health check configuration
+health_check:
+  interval: 30s
+  timeout: 10s
+
+# Cache configuration
+cache:
+  type: "memory"  # Options: memory, redis (future)
+  ttl: 1h
+  max_size: 1000
+  max_memory: 100MB
+  cleanup_interval: 10m
+
+# Observability configuration
+observability:
+  logging:
+    level: "info"  # Options: debug, info, warn, error
+    format: "json"  # Options: json, console
+    output_path: "logs/app.log"
+    error_path: "logs/error.log"
+    development: false
+
+  metrics:
+    enabled: true
+    port: 9090
+    path: "/metrics"
+    collect_interval: 15s
+
+  tracing:
+    enabled: false  # Set to true to enable OpenTelemetry tracing
+    service_name: "semaroute"
+    environment: "development"
+
+# Example environment variables to set:
+# export OPENAI_API_KEY="your-openai-api-key"
+# export ANTHROPIC_API_KEY="your-anthropic-api-key"
+# export SEMAROUTE_SERVER_PORT="8080"
+# export SEMAROUTE_OBSERVABILITY_LOGGING_LEVEL="debug"
